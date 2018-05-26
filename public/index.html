@@ -12,20 +12,50 @@
       #messages li { padding: 5px 10px; }
       #messages li:nth-child(odd) { background: #eee; }
     </style>
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
   </head>
   <body>
+    <h1>Number of participants : <span id="numOfActiveUsers">0</span></h1>
     <ul id="messages"></ul>
-    <form action="">
-      <input id="m" autocomplete="off" /><button>Send</button>
+    <form id="chatForm">
+      <input id="messageInput" autocomplete="off" /><button type="button" id="btn_send">Send</button>
     </form>
     
     <script src="/socket.io/socket.io.js"></script>
     <script>
-        var socket = io();
-        socket.on('news', function (data) {
-          console.log(data);
-          socket.emit('my other event', { my: 'data' });
+      $(window).on('load', ()=> {
+        $('#chatForm').submit(() => { 
+          $('#btn_send').click();
+          return false; 
         });
+
+        var socket = io();
+        socket.on('connect', () => {
+          $('#messages').append('<li>You are ' + socket.id + '</li>');
+        });
+
+        socket.on('news', (data) =>  {
+          $('#messages').append('<li>' + data + '</li>');
+          socket.emit('other-event', { received: "News by " + socket.id });
+        });
+
+        socket.on('message', (data) => {
+          $('#messages').append('<li>' + data + '</li>');
+          socket.emit('other-event', { received: "Message by " + socket.id });
+        });
+
+        socket.on('numOfActiveConnections', (data) => {
+          $('#numOfActiveUsers').text(data);
+          socket.emit('other-event', { received: "numOfActiveConnections by " + socket.id });
+        });
+
+        $('#btn_send').on('click', ()=> {
+          if ($.trim($('#messageInput').val()) != '') {
+            socket.emit('user-message', $('#messageInput').val());
+            $('#messageInput').val('');
+          }
+        })
+      });
     </script>
     
   </body>
