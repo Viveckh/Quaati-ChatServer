@@ -30,7 +30,7 @@ server.on('error', onError);
 server.on('listening', onListening);
 
 /**Socket.io CUSTOM CODE */
-import socketApi from '../sockets/socketApi';
+var socketApi = require('../sockets/socketApi');
 var io = socketApi.io;
 io.attach(server);
 
