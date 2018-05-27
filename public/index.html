@@ -13,11 +13,18 @@
       #messages li:nth-child(odd) { background: #eee; }
     </style>
     <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.13/css/all.css" integrity="sha384-DNOHZ68U8hZfKXOrtjWvjxusGo9WQnrNx2sqG0tfsghAvtVlRW3tvkXWZh58N9jp" crossorigin="anonymous">
   </head>
   <body>
-    <h1>Number of participants : <span id="numOfActiveUsers">0</span></h1>
+    <h1>Number of participants : <span id="numOfActiveUsers"><i class="fas fa-spinner fa-spin"></i></span></h1>
     <ul id="messages"></ul>
     <form id="chatForm">
+      <div style="border: 1px solid black">
+          <p style="color: beige">Enter socket id of receipient to send private message</p>
+          <input id="socketIdInput" />
+      </div>
+      <br><br>
+      
       <input id="messageInput" autocomplete="off" /><button type="button" id="btn_send">Send</button>
     </form>
     
@@ -44,15 +51,21 @@
           socket.emit('other-event', { received: "Message by " + socket.id });
         });
 
-        socket.on('numOfActiveConnections', (data) => {
-          $('#numOfActiveUsers').text(data);
+        socket.on('numOfActiveConnections', (numOfActiveConnections) => {
+          $('#numOfActiveUsers').text(numOfActiveConnections);
           socket.emit('other-event', { received: "numOfActiveConnections by " + socket.id });
         });
 
         $('#btn_send').on('click', ()=> {
           if ($.trim($('#messageInput').val()) != '') {
-            socket.emit('user-message', $('#messageInput').val());
+            if ($.trim($('#socketIdInput').val()) != '') {
+              socket.emit('private-message', $('#socketIdInput').val(), $('#messageInput').val());
+            }
+            else {
+              socket.emit('public-message', $('#messageInput').val());
+            }
             $('#messageInput').val('');
+            $('#socketIdInput').val('');
           }
         })
       });
