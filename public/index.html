@@ -16,6 +16,7 @@
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.13/css/all.css" integrity="sha384-DNOHZ68U8hZfKXOrtjWvjxusGo9WQnrNx2sqG0tfsghAvtVlRW3tvkXWZh58N9jp" crossorigin="anonymous">
   </head>
   <body>
+    <h2 id="reconnectingMsg" style="display:none;">Reconnecting... <i class="fas fa-spinner fa-spin"></i></h2>
     <h1>Number of participants : <span id="numOfActiveUsers"><i class="fas fa-spinner fa-spin"></i></span></h1>
     <ul id="messages"></ul>
     <form id="chatForm">
@@ -39,6 +40,14 @@
         var socket = io();
         socket.on('connect', () => {
           $('#messages').append('<li>You are ' + socket.id + '</li>');
+        });
+
+        socket.on('reconnect', (attemptNumber) => {
+          $('#reconnectingMsg').css('display', 'none');
+        });
+
+        socket.on('reconnecting', (attemptNumber) => {
+          $('#reconnectingMsg').css('display', 'block');
         });
 
         socket.on('news', (data) =>  {
