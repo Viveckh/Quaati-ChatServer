@@ -56,7 +56,7 @@
         });
 
         socket.on('message', (data) => {
-          $('#messages').append('<li>' + data + '</li>');
+          $('#messages').append('<li>' + data[0]['text'] + '</li>');
           socket.emit('other-event', { received: "Message by " + socket.id });
         });
 
@@ -71,7 +71,8 @@
               socket.emit('private-message', $('#socketIdInput').val(), $('#messageInput').val());
             }
             else {
-              socket.emit('public-message', $('#messageInput').val());
+              $('#messages').append('<li>' + $('#messageInput').val() + '</li>');
+              socket.emit('web-message', $('#messageInput').val());
             }
             $('#messageInput').val('');
             $('#socketIdInput').val('');
