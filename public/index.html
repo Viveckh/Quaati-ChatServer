@@ -38,6 +38,7 @@
         });
 
         var socket = io();
+        socket.emit('userJoined', null)
         socket.on('connect', () => {
           $('#messages').append('<li>You are ' + socket.id + '</li>');
         });

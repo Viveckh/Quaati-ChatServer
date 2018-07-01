@@ -1,6 +1,7 @@
 import socket_io from 'socket.io';
 import _ from 'lodash'
-import dbConnection from './../db/index.js';
+// import {dbConnection} from './../db/index.js';
+import ActiveUserService from './../services/activeUserService.js'
 
 var io = socket_io();
 
@@ -60,13 +61,18 @@ socketApi.sendNotification = () => {
 
 // Event listeners.
 // When a user joins the chatroom.
-function onUserJoined(userId, socket) {
+async function onUserJoined(userId, socket) {
     try {
         // The userId is null for new users.
         if (!userId) {
-            usersDB.push(parseInt((Math.random() * 100) + 1));
-            users[socket.id] = usersDB[usersDB.length - 1]
-
+            let val = "Sujil"+numberOfActiveSockets;
+            let res = await ActiveUserService.addActiveUser({
+                username: "Sujil"+numberOfActiveSockets
+            });
+            // usersDB.push(parseInt((Math.random() * 100) + 1));
+            // users[socket.id] = usersDB[usersDB.length - 1]
+            users[socket.id] = res.insertedId;
+            console.log("New user joined with id: ", users[socket.id]);
             _sendExistingMessages(socket);
 
         } else {
