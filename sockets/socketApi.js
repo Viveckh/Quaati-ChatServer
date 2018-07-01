@@ -1,5 +1,6 @@
 import socket_io from 'socket.io';
 import _ from 'lodash'
+import dbConnection from './../db/index.js';
 
 var io = socket_io();
 
@@ -27,13 +28,13 @@ io.on('connection', (socket) => {
         numberOfActiveSockets--;
         //Emitting to all the connected sockets other than itself
         socket.broadcast.emit('news', socket.id + " has just disconnected.");
-        
+
         //Emitting to all the connected sockets
         io.emit('numOfActiveConnections', numberOfActiveSockets);
     });
 
     socket.on('userJoined', (userId) => onUserJoined(userId, socket));
-    
+
     socket.on('other-event', (data) => {
         console.log(data);
     });
@@ -53,33 +54,32 @@ io.on('connection', (socket) => {
 });
 
 socketApi.sendNotification = () => {
-    io.sockets.emit('hello', {msg: 'Hello World!'});
+    io.sockets.emit('hello', { msg: 'Hello World!' });
 }
-
 
 
 // Event listeners.
 // When a user joins the chatroom.
 function onUserJoined(userId, socket) {
     try {
-      // The userId is null for new users.
-      if (!userId) {
-        usersDB.push(parseInt((Math.random() *100) + 1));
-        users[socket.id] = usersDB[usersDB.length-1]
+        // The userId is null for new users.
+        if (!userId) {
+            usersDB.push(parseInt((Math.random() * 100) + 1));
+            users[socket.id] = usersDB[usersDB.length - 1]
 
-        _sendExistingMessages(socket);
-        
-      } else {
-        users[socket.id] = userId;
-        _sendExistingMessages(socket);
-      }
-    } catch(err) {
-      console.err(err);
+            _sendExistingMessages(socket);
+
+        } else {
+            users[socket.id] = userId;
+            _sendExistingMessages(socket);
+        }
+    } catch (err) {
+        console.err(err);
     }
-  }
+}
 
-  function webMessageReceived(message, senderSocket){
-      console.log("MEssage received from web: ", message)
+function webMessageReceived(message, senderSocket) {
+    console.log("MEssage received from web: ", message)
     var userId = users[senderSocket.id];
 
     // Safety check.
@@ -93,9 +93,9 @@ function onUserJoined(userId, socket) {
             _id: userId
         }
     }
-  
+
     _sendAndSaveMessage(msg, senderSocket);
-  }
+}
 
 // When a user sends a message in the chatroom.
 function onMessageReceived(message, senderSocket) {
@@ -103,9 +103,9 @@ function onMessageReceived(message, senderSocket) {
 
     // Safety check.
     if (!userId) return;
-  
+
     _sendAndSaveMessage(message, senderSocket);
-  }
+}
 
 
 // Helper functions.
@@ -115,7 +115,7 @@ function _sendExistingMessages(socket) {
         return msg.chatId == chatId;
     })
 
-    if(!messages.length ) return;
+    if (!messages.length) return;
     socket.emit('message', messages.reverse());
 
 
@@ -127,8 +127,8 @@ function _sendExistingMessages(socket) {
     //     if (!messages.length) return;
     //     socket.emit('message', messages.reverse());
     // });
-  }
-  
+}
+
 // Save the message to the db and send all sockets but the sender.
 function _sendAndSaveMessage(message, socket, fromServer) {
     var messageData = {
@@ -136,7 +136,7 @@ function _sendAndSaveMessage(message, socket, fromServer) {
         user: message.user,
         createdAt: new Date(message.createdAt),
         chatId: chatId,
-        _id: parseInt((Math.random() *100) + 1)
+        _id: parseInt((Math.random() * 100) + 1)
     };
 
     messagesDB.push(messageData);

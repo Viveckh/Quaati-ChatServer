@@ -1,0 +1,5 @@
+{
+    "STUDENT_COLLECTION": "students_master",
+    "MESSAGES_COLLECTION": "messages",
+    "ACTIVE_USERS":"messenger_users"
+}
