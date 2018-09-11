@@ -7,9 +7,23 @@ export default {
       return res;
     }
     catch(err){
-      console.log("Mongo Error during adding active user");
+      console.log(err)
+      return null;
+    }
+  },
+
+  async getAllFriendsChattedWith(username){
+    try {
+      let res = await MessageCollection().find({
+        user: parseInt(username)
+      }).project({to : 1, chatId: 1}).toArray();
+      
+      return res;
+    }catch(err){
       console.log(err)
       return null;
     }
   }
+
+
 }

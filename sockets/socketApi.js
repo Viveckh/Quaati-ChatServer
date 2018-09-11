@@ -1,6 +1,6 @@
 import socket_io from 'socket.io';
 import _ from 'lodash'
-// import {dbConnection} from './../db/index.js';
+import {dbConnection} from './../db/index.js';
 import ActiveUserService from './../services/activeUserService.js'
 
 var io = socket_io();
@@ -11,24 +11,22 @@ socketApi.io = io;
 let numberOfActiveSockets = 0;
 
 let usersDB = []
-let users = []
+let users = {};
+
+let userToSocket = {}
 
 let chatId = 1;
 
 let messagesDB = [];
 
 io.on('connection', (socket) => {
-    //Increment the count of alive connections on every new connection
-    numberOfActiveSockets++;
-    socket.broadcast.emit('news', socket.id + " has just connected.");
-    io.emit('numOfActiveConnections', numberOfActiveSockets);
+
+    socket.on('getOnlineUsers', () => getAllOnlineUsers( socket))
 
     //Upon a socket disconnect, 
     //decrement the count of alive connections, emit that the socket left and new number of active sockets to everyone remaining
     socket.on('disconnect', () => {
         numberOfActiveSockets--;
-        //Emitting to all the connected sockets other than itself
-        socket.broadcast.emit('news', socket.id + " has just disconnected.");
 
         //Emitting to all the connected sockets
         io.emit('numOfActiveConnections', numberOfActiveSockets);
@@ -58,30 +56,39 @@ socketApi.sendNotification = () => {
     io.sockets.emit('hello', { msg: 'Hello World!' });
 }
 
+function getAllOnlineUsers(socket) {
+    socket.emit('showOnlineUsers', {msg: users});
+}
+
 
 // Event listeners.
-// When a user joins the chatroom.
+// When a user joins the chatroom. Send back all the users that the current user has chatted with from messages
 async function onUserJoined(userId, socket) {
-    try {
-        // The userId is null for new users.
-        if (!userId) {
-            let val = "Sujil"+numberOfActiveSockets;
-            let res = await ActiveUserService.addActiveUser({
-                username: "Sujil"+numberOfActiveSockets
-            });
-            // usersDB.push(parseInt((Math.random() * 100) + 1));
-            // users[socket.id] = usersDB[usersDB.length - 1]
-            users[socket.id] = res.insertedId;
-            console.log("New user joined with id: ", users[socket.id]);
-            _sendExistingMessages(socket);
+    let friendList = await ActiveUserService.getAllFriendsChattedWith(userId);
+    socket.emit('allUsers', friendList);
 
-        } else {
-            users[socket.id] = userId;
-            _sendExistingMessages(socket);
-        }
-    } catch (err) {
-        console.err(err);
-    }
+    userToSocket[userId] = socket.id;
+
+
+    // try {
+    //     // The userId is null for new users. 
+    //     if (!userId) {
+    //         let res = await ActiveUserService.addActiveUser({
+    //             username: userId
+    //         });
+    //         // usersDB.push(parseInt((Math.random() * 100) + 1));
+    //         // users[socket.id] = usersDB[usersDB.length - 1]
+    //         users[socket.id] = res.insertedId;
+    //         console.log("New user joined with id: ", users[socket.id]);
+    //         _sendExistingMessages(socket);
+
+    //     } else {
+    //         users[socket.id] = userId;
+    //         _sendExistingMessages(socket);
+    //     }
+    // } catch (err) {
+    //     console.err(err);
+    // }
 }
 
 function webMessageReceived(message, senderSocket) {
