@@ -15,8 +15,11 @@ export default {
   async getAllFriendsChattedWith(username){
     try {
       let res = await MessageCollection().find({
-        user: parseInt(username)
-      }).project({to : 1, chatId: 1}).toArray();
+        $or: [
+          {user: parseInt(username)},
+          {to: parseInt(username)}
+        ]
+      }).project({to : 1, chatId: 1, user: 1, messages: 1}).toArray();
       
       return res;
     }catch(err){

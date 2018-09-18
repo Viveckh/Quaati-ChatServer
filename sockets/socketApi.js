@@ -1,7 +1,10 @@
 import socket_io from 'socket.io';
 import _ from 'lodash'
-import {dbConnection} from './../db/index.js';
+import {
+    dbConnection
+} from './../db/index.js';
 import ActiveUserService from './../services/activeUserService.js'
+import MessageService from './../services/messageService.js'
 
 var io = socket_io();
 
@@ -13,7 +16,8 @@ let numberOfActiveSockets = 0;
 let usersDB = []
 let users = {};
 
-let userToSocket = {}
+let userToSocket = {},
+    socketToUser = {};
 
 let chatId = 1;
 
@@ -21,18 +25,23 @@ let messagesDB = [];
 
 io.on('connection', (socket) => {
 
-    socket.on('getOnlineUsers', () => getAllOnlineUsers( socket))
+    console.log("New socket connected: ", socket.id)
+
+    socket.on('getOnlineUsers', () => getAllOnlineUsers(socket))
 
     //Upon a socket disconnect, 
     //decrement the count of alive connections, emit that the socket left and new number of active sockets to everyone remaining
     socket.on('disconnect', () => {
         numberOfActiveSockets--;
 
+        console.log("Socket disconnected: ", socket.id)
         //Emitting to all the connected sockets
         io.emit('numOfActiveConnections', numberOfActiveSockets);
     });
 
     socket.on('userJoined', (userId) => onUserJoined(userId, socket));
+
+    socket.on('chatHistory', (chatId) => onChatHistory(chatId, socket))
 
     socket.on('other-event', (data) => {
         console.log(data);
@@ -53,11 +62,15 @@ io.on('connection', (socket) => {
 });
 
 socketApi.sendNotification = () => {
-    io.sockets.emit('hello', { msg: 'Hello World!' });
+    io.sockets.emit('hello', {
+        msg: 'Hello World!'
+    });
 }
 
 function getAllOnlineUsers(socket) {
-    socket.emit('showOnlineUsers', {msg: users});
+    socket.emit('showOnlineUsers', {
+        msg: users
+    });
 }
 
 
@@ -68,31 +81,14 @@ async function onUserJoined(userId, socket) {
     socket.emit('allUsers', friendList);
 
     userToSocket[userId] = socket.id;
+}
 
-
-    // try {
-    //     // The userId is null for new users. 
-    //     if (!userId) {
-    //         let res = await ActiveUserService.addActiveUser({
-    //             username: userId
-    //         });
-    //         // usersDB.push(parseInt((Math.random() * 100) + 1));
-    //         // users[socket.id] = usersDB[usersDB.length - 1]
-    //         users[socket.id] = res.insertedId;
-    //         console.log("New user joined with id: ", users[socket.id]);
-    //         _sendExistingMessages(socket);
-
-    //     } else {
-    //         users[socket.id] = userId;
-    //         _sendExistingMessages(socket);
-    //     }
-    // } catch (err) {
-    //     console.err(err);
-    // }
+async function onChatHistory(chatId, socket) {
+    let history = await MessageService.getChatHistory(chatId);
+    socket.emit('showChatHistory', history)
 }
 
 function webMessageReceived(message, senderSocket) {
-    console.log("MEssage received from web: ", message)
     var userId = users[senderSocket.id];
 
     // Safety check.
